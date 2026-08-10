@@ -24,8 +24,8 @@ function word(n,f){return f==='banana'?(n===1?'банан':n<5?'банана':'�
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function persist(){localStorage.setItem('volshebnoe-derevo-progress',JSON.stringify({firstName,lastName,studentReady,index,experiments,sessionId}))}
 function fullName(){return `${firstName.trim()} ${lastName.trim()}`.trim()}
-function updateFirstName(v){firstName=v;startError='';persist();render()}
-function updateLastName(v){lastName=v;startError='';persist();render()}
+function updateFirstName(v){firstName=v;startError='';persist()}
+function updateLastName(v){lastName=v;startError='';persist()}
 function ensureSession(){if(!sessionId)sessionId=`tree-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;return sessionId}
 function stateText(){const b=fruits.filter(x=>x==='banana').length,a=fruits.filter(x=>x==='pineapple').length;return `${b} бананов, ${a} ананасов`}
 function basePayload(event,extra={}){const e=experiments[index]||{};return Object.assign({name:fullName()||'Имя не указано',event,tree:index+1,startBanana:trees[index]?.banana??'',startPineapple:trees[index]?.pineapple??'',prediction:e.prediction==='unknown'?'пока не знаю':e.prediction?info[e.prediction].name:'не указан',attempt:e.moves?e.moves.length:'',action:'',state:stateText(),finalFruit:e.finalFruit?info[e.finalFruit].name:'',observation:e.observation||'',sessionId:ensureSession(),page:location.href,source:'volshebnoe-derevo'},extra)}
