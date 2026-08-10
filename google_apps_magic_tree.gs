@@ -8,7 +8,7 @@
  * 3. Скопируйте полученный Web app URL в HTML-файл.
  */
 
-const SHEET_ID = 'ВСТАВЬТЕ_ID_ТАБЛИЦЫ_СЮДА';
+const SHEET_ID = '14g0-TXfVLjbk1YG7TAtHjWKG_v7YVmZV9k70CsUAjpk';
 const SHEET_NAME = 'Ответы';
 
 function doPost(e) {
@@ -34,10 +34,19 @@ function doPost(e) {
     sheet.appendRow([
       new Date(),
       clean_(data.name),
+      clean_(data.event),
       clean_(data.tree),
+      clean_(data.startBanana),
+      clean_(data.startPineapple),
       clean_(data.prediction),
+      clean_(data.attempt),
+      clean_(data.action),
+      clean_(data.state),
       clean_(data.finalFruit),
-      clean_(data.observation)
+      clean_(data.observation),
+      clean_(data.sessionId),
+      clean_(data.page),
+      clean_(data.source || 'volshebnoe-derevo')
     ]);
 
     return jsonResponse_({ ok: true });
@@ -66,11 +75,20 @@ function prepareSheet_(sheet) {
 
   const headers = [[
     'Дата и время',
-    'Имя ребёнка',
+    'Имя и фамилия',
+    'Событие',
     'Номер дерева',
+    'Старт: бананы',
+    'Старт: ананасы',
     'Прогноз',
+    'Попытка / ход',
+    'Действие ученика',
+    'Текущее состояние',
     'Что осталось в конце',
-    'Догадка ребёнка'
+    'Догадка ребёнка',
+    'ID сессии',
+    'Страница',
+    'Источник'
   ]];
 
   const headerRange = sheet.getRange(1, 1, 1, headers[0].length);
@@ -83,12 +101,14 @@ function prepareSheet_(sheet) {
   sheet.setFrozenRows(1);
   sheet.setColumnWidth(1, 150);
   sheet.setColumnWidth(2, 170);
-  sheet.setColumnWidth(3, 120);
-  sheet.setColumnWidth(4, 150);
-  sheet.setColumnWidth(5, 190);
-  sheet.setColumnWidth(6, 420);
+  sheet.setColumnWidth(3, 150);
+  sheet.setColumnWidth(4, 120);
+  sheet.setColumnWidth(8, 120);
+  sheet.setColumnWidth(9, 240);
+  sheet.setColumnWidth(10, 240);
+  sheet.setColumnWidth(12, 420);
   sheet.getRange('A:A').setNumberFormat('dd.mm.yyyy hh:mm:ss');
-  sheet.getRange('F:F').setWrap(true);
+  sheet.getRange('I:L').setWrap(true);
 }
 
 function clean_(value) {
