@@ -23,49 +23,7 @@ function doPost(e) {
     }
 
     const data = JSON.parse(e.postData.contents);
-    const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
-    const isSavedAnswer = clean_(data.event) === 'Ответ сохранён';
-    let sheet = spreadsheet.getSheetByName(isSavedAnswer ? GUESSES_SHEET_NAME : SHEET_NAME);
-
-    if (!sheet) {
-      sheet = spreadsheet.insertSheet(isSavedAnswer ? GUESSES_SHEET_NAME : SHEET_NAME);
-    }
-
-    if (isSavedAnswer) {
-      prepareGuessesSheet_(sheet);
-      sheet.appendRow([
-        new Date(),
-        clean_(data.name),
-        clean_(data.tree),
-        clean_(data.startBanana),
-        clean_(data.startPineapple),
-        clean_(data.prediction),
-        clean_(data.attempt),
-        clean_(data.finalFruit),
-        clean_(data.observation),
-        clean_(data.sessionId),
-        clean_(data.page)
-      ]);
-    } else {
-      prepareSheet_(sheet);
-      sheet.appendRow([
-        new Date(),
-        clean_(data.name),
-        clean_(data.event),
-        clean_(data.tree),
-        clean_(data.startBanana),
-        clean_(data.startPineapple),
-        clean_(data.prediction),
-        clean_(data.attempt),
-        clean_(data.action),
-        clean_(data.state),
-        clean_(data.finalFruit),
-        clean_(data.observation),
-        clean_(data.sessionId),
-        clean_(data.page),
-        clean_(data.source || 'volshebnoe-derevo')
-      ]);
-    }
+    appendData_(data);
 
     return jsonResponse_({ ok: true });
   } catch (error) {
@@ -79,11 +37,73 @@ function doPost(e) {
   }
 }
 
-function doGet() {
+function doGet(e) {
+  if (e && e.parameter && e.parameter.payload) {
+    const callback = safeCallbackName_(e.parameter.callback);
+
+    try {
+      appendData_(JSON.parse(e.parameter.payload));
+      return javascriptResponse_(callback, { ok: true });
+    } catch (error) {
+      console.error(error);
+      return javascriptResponse_(callback, {
+        ok: false,
+        error: error && error.message ? error.message : String(error)
+      });
+    }
+  }
+
   return jsonResponse_({
     ok: true,
     message: 'Скрипт «Волшебное дерево» работает'
   });
+}
+
+function appendData_(data) {
+  const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
+  const isSavedAnswer = clean_(data.event) === 'Ответ сохранён';
+  let sheet = spreadsheet.getSheetByName(isSavedAnswer ? GUESSES_SHEET_NAME : SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(isSavedAnswer ? GUESSES_SHEET_NAME : SHEET_NAME);
+  }
+
+  if (isSavedAnswer) {
+    prepareGuessesSheet_(sheet);
+    sheet.appendRow([
+      new Date(),
+      clean_(data.name),
+      clean_(data.tree),
+      clean_(data.startBanana),
+      clean_(data.startPineapple),
+      clean_(data.prediction),
+      clean_(data.attempt),
+      clean_(data.finalFruit),
+      clean_(data.observation),
+      clean_(data.sessionId),
+      clean_(data.page)
+    ]);
+    return;
+  }
+
+  prepareSheet_(sheet);
+  sheet.appendRow([
+    new Date(),
+    clean_(data.name),
+    clean_(data.event),
+    clean_(data.tree),
+    clean_(data.startBanana),
+    clean_(data.startPineapple),
+    clean_(data.prediction),
+    clean_(data.attempt),
+    clean_(data.action),
+    clean_(data.state),
+    clean_(data.finalFruit),
+    clean_(data.observation),
+    clean_(data.sessionId),
+    clean_(data.page),
+    clean_(data.source || 'volshebnoe-derevo')
+  ]);
 }
 
 function prepareSheet_(sheet) {
@@ -180,4 +200,17 @@ function jsonResponse_(data) {
   return ContentService
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function javascriptResponse_(callback, data) {
+  return ContentService
+    .createTextOutput(callback + '(' + JSON.stringify(data) + ');')
+    .setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+
+function safeCallbackName_(value) {
+  const callback = String(value || '').trim();
+  return /^[A-Za-z_$][0-9A-Za-z_$]*(\.[A-Za-z_$][0-9A-Za-z_$]*)*$/.test(callback)
+    ? callback
+    : 'callback';
 }
