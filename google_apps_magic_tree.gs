@@ -10,6 +10,7 @@
 
 const SHEET_ID = '14g0-TXfVLjbk1YG7TAtHjWKG_v7YVmZV9k70CsUAjpk';
 const SHEET_NAME = 'Ответы';
+const GUESSES_SHEET_NAME = 'Догадки';
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
@@ -23,31 +24,48 @@ function doPost(e) {
 
     const data = JSON.parse(e.postData.contents);
     const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
-    let sheet = spreadsheet.getSheetByName(SHEET_NAME);
+    const isSavedAnswer = clean_(data.event) === 'Ответ сохранён';
+    let sheet = spreadsheet.getSheetByName(isSavedAnswer ? GUESSES_SHEET_NAME : SHEET_NAME);
 
     if (!sheet) {
-      sheet = spreadsheet.insertSheet(SHEET_NAME);
+      sheet = spreadsheet.insertSheet(isSavedAnswer ? GUESSES_SHEET_NAME : SHEET_NAME);
     }
 
-    prepareSheet_(sheet);
-
-    sheet.appendRow([
-      new Date(),
-      clean_(data.name),
-      clean_(data.event),
-      clean_(data.tree),
-      clean_(data.startBanana),
-      clean_(data.startPineapple),
-      clean_(data.prediction),
-      clean_(data.attempt),
-      clean_(data.action),
-      clean_(data.state),
-      clean_(data.finalFruit),
-      clean_(data.observation),
-      clean_(data.sessionId),
-      clean_(data.page),
-      clean_(data.source || 'volshebnoe-derevo')
-    ]);
+    if (isSavedAnswer) {
+      prepareGuessesSheet_(sheet);
+      sheet.appendRow([
+        new Date(),
+        clean_(data.name),
+        clean_(data.tree),
+        clean_(data.startBanana),
+        clean_(data.startPineapple),
+        clean_(data.prediction),
+        clean_(data.attempt),
+        clean_(data.finalFruit),
+        clean_(data.observation),
+        clean_(data.sessionId),
+        clean_(data.page)
+      ]);
+    } else {
+      prepareSheet_(sheet);
+      sheet.appendRow([
+        new Date(),
+        clean_(data.name),
+        clean_(data.event),
+        clean_(data.tree),
+        clean_(data.startBanana),
+        clean_(data.startPineapple),
+        clean_(data.prediction),
+        clean_(data.attempt),
+        clean_(data.action),
+        clean_(data.state),
+        clean_(data.finalFruit),
+        clean_(data.observation),
+        clean_(data.sessionId),
+        clean_(data.page),
+        clean_(data.source || 'volshebnoe-derevo')
+      ]);
+    }
 
     return jsonResponse_({ ok: true });
   } catch (error) {
@@ -109,6 +127,42 @@ function prepareSheet_(sheet) {
   sheet.setColumnWidth(12, 420);
   sheet.getRange('A:A').setNumberFormat('dd.mm.yyyy hh:mm:ss');
   sheet.getRange('I:L').setWrap(true);
+}
+
+function prepareGuessesSheet_(sheet) {
+  if (sheet.getLastRow() > 0) {
+    return;
+  }
+
+  const headers = [[
+    'Дата и время',
+    'Имя и фамилия',
+    'Номер дерева',
+    'Старт: бананы',
+    'Старт: ананасы',
+    'Прогноз',
+    'Попытка / ход',
+    'Что осталось в конце',
+    'Догадка ребёнка',
+    'ID сессии',
+    'Страница'
+  ]];
+
+  const headerRange = sheet.getRange(1, 1, 1, headers[0].length);
+  headerRange
+    .setValues(headers)
+    .setFontWeight('bold')
+    .setBackground('#52327c')
+    .setFontColor('#ffffff');
+
+  sheet.setFrozenRows(1);
+  sheet.setColumnWidth(1, 150);
+  sheet.setColumnWidth(2, 170);
+  sheet.setColumnWidth(9, 420);
+  sheet.setColumnWidth(10, 220);
+  sheet.setColumnWidth(11, 220);
+  sheet.getRange('A:A').setNumberFormat('dd.mm.yyyy hh:mm:ss');
+  sheet.getRange('I:I').setWrap(true);
 }
 
 function clean_(value) {
